@@ -1,6 +1,8 @@
 # batch_processing
 Designing a batch processing data pipeline for processing data using docker, spark and cassandra
 
+This pipeline reads data from a csv file, processes it and then save into a cassandra database
+
 ## Steps to run batch processing
 
 - pull repository
