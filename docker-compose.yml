@@ -1,0 +1,70 @@
+version: '3'
+
+networks:
+  app-tier:
+    driver: bridge
+
+
+services:
+  spark:
+    image: docker.io/bitnami/spark:3.3
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_USER=spark
+      #- DB_UPSTREAM: http://${DOCKER_GATEWAY_HOST:-host.docker.internal}:3000
+    ports:
+      - '8080:8080'
+
+
+    volumes: 
+    - ".:/opt/spark"
+  spark-worker:
+    image: docker.io/bitnami/spark:3.3
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_USER=spark
+      #- DB_UPSTREAM: http://${DOCKER_GATEWAY_HOST:-host.docker.internal}:3000
+    networks:
+      - app-tier
+
+    
+  cassandra:
+    image: 'bitnami/cassandra:latest'
+    #image: docker.io/bitnami/cassandra:4.1
+    #image: cassandra:latest
+    ports:
+      - '7000:7000'
+      - '9042:9042'   #'127.0.0.1:9
+    links:
+      - "spark"
+    volumes:
+      #- 'cassandra_data:/bitnami'
+      - ".:/opt/spark"
+    healthcheck:
+      test: [ "CMD", "/opt/bitnami/cassandra/bin/cqlsh", "-u cassandra", "-p cassandra" ,"-e \"describe keyspaces\"" ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+    environment:
+      - CASSANDRA_SEEDS=cassandra
+      - CASSANDRA_PASSWORD_SEEDER=yes
+      - CASSANDRA_PASSWORD=cassandra
+      #- ACTION_BASE_URL: ${WSL_HOST:-host.docker.internal}
+      #- DB_UPSTREAM: http://${DOCKER_GATEWAY_HOST:-host.docker.internal}:3000"
+    networks:
+      - app-tier
+
+#volumes:
+#  cassandra_data:
+#    driver: local
