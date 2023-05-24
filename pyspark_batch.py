@@ -41,6 +41,9 @@ def main():
     #df.printSchema()
 
 
+
+
+
     df.show()
 
 
@@ -60,6 +63,12 @@ def main():
     for col_name in cast_columns:
         df = df.withColumn(col_name, col(col_name).cast('float'))
     df.printSchema()
+
+
+    # Fill null values in numeric columns
+    #for column in cast_columns:
+        #df = df.withColumn(column, df[column].fillna(0))
+        #df = df.withColumn(column, col(column).fillna(0))
     
     initial_data(df)
     
